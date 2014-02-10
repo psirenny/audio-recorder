@@ -1,0 +1,28 @@
+{
+  "author": "psirenny <djtorres0@gmail.com>",
+  "bugs": {
+    "url": "https://github.com/psirenny/audio-recorder/issues"
+  },
+  "dependencies": {
+    "chainsaw": "*",
+    "lodash": "*"
+  },
+  "description": "A web audio recorder.",
+  "keywords": [
+    "audio",
+    "microphone",
+    "record"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "name": "audio-recorder",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/psirenny/audio-recorder.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "0.1.0"
+}
