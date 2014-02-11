@@ -20,7 +20,7 @@ module.exports = function (obj) {
 
     this.stop = function (callback) {
       strategy.stop.call(obj, function (url) {
-        saw.nest(callback, url);
+        saw.next();
       });
     };
 
