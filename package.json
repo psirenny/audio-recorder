@@ -4,10 +4,9 @@
     "url": "https://github.com/psirenny/audio-recorder/issues"
   },
   "dependencies": {
-    "chainsaw": "*",
-    "lodash": "*"
+    "chainsaw": "*"
   },
-  "description": "A web audio recorder.",
+  "description": "An extensible audio recorder.",
   "keywords": [
     "audio",
     "microphone",
