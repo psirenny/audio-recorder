@@ -12,6 +12,13 @@ module.exports = function (obj) {
       });
     };
 
+    this.send = function (url, callback) {
+      strategy.send.call(obj, url, function (err, url) {
+        if (callback) return saw.nest(callback, err, url);
+        saw.next();
+      });
+    };
+
     this.start = function (callback) {
       strategy.start.call(obj, function () {
         saw.next();
@@ -19,7 +26,7 @@ module.exports = function (obj) {
     };
 
     this.stop = function (callback) {
-      strategy.stop.call(obj, function (url) {
+      strategy.stop.call(obj, function () {
         saw.next();
       });
     };
