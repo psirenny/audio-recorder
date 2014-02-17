@@ -7,7 +7,8 @@ module.exports = function (obj) {
     var strategy = null;
 
     this.permission = function (callback) {
-      strategy.permission.call(obj, function (val) {
+      strategy.permission.call(obj, function () {
+        if (callback) return saw.nest(callback);
         saw.next();
       });
     };
@@ -21,12 +22,14 @@ module.exports = function (obj) {
 
     this.start = function (callback) {
       strategy.start.call(obj, function () {
+        if (callback) return saw.nest(callback);
         saw.next();
       });
     };
 
     this.stop = function (callback) {
       strategy.stop.call(obj, function () {
+        if (callback) return saw.nest(callback);
         saw.next();
       });
     };
