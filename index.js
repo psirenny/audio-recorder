@@ -6,6 +6,10 @@ module.exports = function (obj) {
   return chainsaw.light(function (saw) {
     var strategy = null;
 
+    this.available = function (callback) {
+      saw.nest(callback, !!strategy);
+    };
+
     this.permission = function (callback) {
       strategy.permission.call(obj, function () {
         if (callback) return saw.nest(callback);
