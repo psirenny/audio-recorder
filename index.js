@@ -10,6 +10,18 @@ module.exports = function (obj) {
       saw.nest(callback, !!strategy);
     };
 
+    this.isRecording = function (callback) {
+      saw.nest(callback, !!obj.isRecording);
+    };
+
+    this.limit = function (time, callback) {
+      var self = this;
+      var stop = function () { self.stop(); };
+      obj.timer = setTimeout(stop, time);
+      if (callback) return saw.nest(callback);
+      saw.next();
+    };
+
     this.permission = function (callback) {
       strategy.permission.call(obj, function () {
         if (callback) return saw.nest(callback);
@@ -33,6 +45,7 @@ module.exports = function (obj) {
     };
 
     this.stop = function (callback) {
+      if (obj.timer) clearInterval(obj.timer);
       strategy.stop.call(obj, function () {
         obj.isRecording = false;
         if (callback) return saw.nest(callback);
