@@ -22,6 +22,7 @@ module.exports = function (obj) {
 
     this.start = function (callback) {
       strategy.start.call(obj, function () {
+        obj.isRecording = true;
         if (callback) return saw.nest(callback);
         saw.next();
       });
@@ -29,9 +30,15 @@ module.exports = function (obj) {
 
     this.stop = function (callback) {
       strategy.stop.call(obj, function () {
+        obj.isRecording = false;
         if (callback) return saw.nest(callback);
         saw.next();
       });
+    };
+
+    this.toggle = function (callback) {
+      if (obj.isRecording) return this.stop(callback);
+      this.start(callback);
     };
 
     this.use = function (strat) {
