@@ -1,69 +1,74 @@
-var chainsaw = require('chainsaw');
+var chainit = require('chainit')
+  , events = require('events');
 
-module.exports = function (obj) {
-  if (!obj) obj = {};
+function Recorder() {
+  this.data = {};
+  this.events = new events.EventEmitter();
+  this.strategy = null;
+  events.EventEmitter.call(this);
+}
 
-  return chainsaw.light(function (saw) {
-    var strategy = null;
+Recorder.prototype.limit = function (time, next) {
+  var self = this;
+  var stop = function () { self.stop(); };
+  setTimeout(stop, time);
+  next();
+};
 
-    this.available = function (callback) {
-      saw.nest(callback, !!strategy);
-    };
+Recorder.prototype.on = function (event, callback) {
+  this.events.on(event, callback);
+  return this;
+};
 
-    this.isRecording = function (callback) {
-      saw.nest(callback, !!obj.isRecording);
-    };
-
-    this.limit = function (time, callback) {
-      var self = this;
-      var stop = function () { self.stop(); };
-      obj.timer = setTimeout(stop, time);
-      if (callback) return saw.nest(callback);
-      saw.next();
-    };
-
-    this.permission = function (callback) {
-      strategy.permission.call(obj, function () {
-        if (callback) return saw.nest(callback);
-        saw.next();
-      });
-    };
-
-    this.send = function (url, callback) {
-      strategy.send.call(obj, url, function (err, url) {
-        if (callback) return saw.nest(callback, err, url);
-        saw.next();
-      });
-    };
-
-    this.start = function (callback) {
-      strategy.start.call(obj, function () {
-        obj.isRecording = true;
-        if (callback) return saw.nest(callback);
-        saw.next();
-      });
-    };
-
-    this.stop = function (callback) {
-      if (obj.timer) clearInterval(obj.timer);
-      strategy.stop.call(obj, function () {
-        obj.isRecording = false;
-        if (callback) return saw.nest(callback);
-        saw.next();
-      });
-    };
-
-    this.toggle = function (callback) {
-      if (obj.isRecording) return this.stop(callback);
-      this.start(callback);
-    };
-
-    this.use = function (strat) {
-      if (strategy) return saw.next();
-      strat.available.call(obj, function (val) {
-        if (val) strategy = strat;
-        saw.next();
-      });
-    };
+Recorder.prototype.permission = function (next) {
+  this.strategy.permission.call(this.data, function () {
+    next();
   });
 };
+
+Recorder.prototype.send = function (url, next) {
+  this.strategy.send.call(this.data, url,
+    function (err, url) {
+      next(err, url);
+    }
+  );
+};
+
+Recorder.prototype.start = function (next) {
+  var self = this;
+  this.strategy.start.call(this.data, function () {
+    self.isRecording = true;
+    self.events.emit('start');
+    next();
+  });
+};
+
+Recorder.prototype.stop = function (next) {
+  var self = this;
+  if (this.timerId) clearInterval(this.timerId);
+  this.strategy.stop.call(this.data, function () {
+    self.isRecording = false;
+    self.events.emit('stop');
+    next();
+  });
+};
+
+Recorder.prototype.timer = function (next) {
+  var startTime = (new Date()).getTime();
+  this.timerId = setInterval(function () {
+    var currentTime = (new Date()).getTime();
+    var elapsedTime = currentTime - startTime;
+    next(elapsedTime);
+  }, 50);
+};
+
+Recorder.prototype.use = function (strat, next) {
+  var self = this;
+  if (this.strategy) return next();
+  strat.available.call(this.data, function (val) {
+    if (val) self.strategy = strat;
+    next();
+  });
+};
+
+module.exports = chainit(Recorder);
