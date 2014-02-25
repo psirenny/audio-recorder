@@ -4,8 +4,8 @@ var chainit = require('chainit')
 function Recorder() {
   this.data = {};
   this.events = new events.EventEmitter();
+  this.isRecording = false;
   this.strategy = null;
-  events.EventEmitter.call(this);
 }
 
 Recorder.prototype.limit = function (time, next) {
@@ -27,11 +27,18 @@ Recorder.prototype.permission = function (next) {
 };
 
 Recorder.prototype.send = function (url, next) {
-  this.strategy.send.call(this.data, url,
-    function (err, url) {
-      next(err, url);
-    }
-  );
+  var self = this;
+
+  function fn () {
+    self.strategy.send.call(self.data, url,
+      function (err, url) {
+        next(err, url);
+      }
+    );
+  };
+
+  if (this.isRecording) return this.on('stop', fn);
+  fn();
 };
 
 Recorder.prototype.start = function (next) {
@@ -43,6 +50,10 @@ Recorder.prototype.start = function (next) {
   });
 };
 
+Recorder.prototype.started = function (callback, next) {
+  this.on('start', next);
+};
+
 Recorder.prototype.stop = function (next) {
   var self = this;
   if (this.timerId) clearInterval(this.timerId);
@@ -51,6 +62,10 @@ Recorder.prototype.stop = function (next) {
     self.events.emit('stop');
     next();
   });
+};
+
+Recorder.prototype.stopped = function (next) {
+  this.on('stop', next);
 };
 
 Recorder.prototype.timer = function (next) {
