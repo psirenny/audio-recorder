@@ -21,24 +21,21 @@ Recorder.prototype.on = function (event, callback) {
 };
 
 Recorder.prototype.permission = function (next) {
-  this.strategy.permission.call(this.data, function () {
-    next();
-  });
+  this.strategy.permission.call(this.data, next);
 };
 
 Recorder.prototype.send = function (url, next) {
   var self = this;
+  this.strategy.send.call(self.data, url,
+    function (err, res) {
+      self.events.emit('send', res);
+    }
+  );
+  next();
+};
 
-  function fn () {
-    self.strategy.send.call(self.data, url,
-      function (err, url) {
-        next(err, url);
-      }
-    );
-  };
-
-  if (this.isRecording) return this.on('stop', fn);
-  fn();
+Recorder.prototype.sent = function (next) {
+  this.on('send', next);
 };
 
 Recorder.prototype.start = function (next) {
@@ -50,7 +47,7 @@ Recorder.prototype.start = function (next) {
   });
 };
 
-Recorder.prototype.started = function (callback, next) {
+Recorder.prototype.started = function (next) {
   this.on('start', next);
 };
 
