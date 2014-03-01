@@ -11,7 +11,7 @@ function Recorder() {
 Recorder.prototype.limit = function (time, next) {
   var self = this;
   var stop = function () { self.stop(); };
-  setTimeout(stop, time);
+  this.limitObj = setTimeout(stop, time);
   next();
 };
 
@@ -53,6 +53,7 @@ Recorder.prototype.started = function (next) {
 
 Recorder.prototype.stop = function (next) {
   var self = this;
+  if (this.limitObj) clearTimeout(this.limitObj);
   if (this.timerId) clearInterval(this.timerId);
   this.strategy.stop.call(this.data, function () {
     self.isRecording = false;
