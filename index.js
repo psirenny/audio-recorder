@@ -8,6 +8,11 @@ function Recorder() {
   this.strategy = null;
 }
 
+Recorder.prototype.config = function (name, options, next) {
+  if (this.strategy.name !== name) return next();
+  this.strategy.config.call(this.data, options, next);
+};
+
 Recorder.prototype.limit = function (time, next) {
   var self = this;
   var stop = function () { self.stop(); };
@@ -15,9 +20,9 @@ Recorder.prototype.limit = function (time, next) {
   next();
 };
 
-Recorder.prototype.on = function (event, callback) {
+Recorder.prototype.on = function (event, callback, next) {
   this.events.on(event, callback);
-  return this;
+  next();
 };
 
 Recorder.prototype.permission = function (next) {
@@ -34,8 +39,8 @@ Recorder.prototype.send = function (url, next) {
   next();
 };
 
-Recorder.prototype.sent = function (next) {
-  this.on('send', next);
+Recorder.prototype.sent = function (cb, next) {
+  this.on('send', cb, next);
 };
 
 Recorder.prototype.start = function (next) {
@@ -47,8 +52,8 @@ Recorder.prototype.start = function (next) {
   });
 };
 
-Recorder.prototype.started = function (next) {
-  this.on('start', next);
+Recorder.prototype.started = function (cb, next) {
+  this.on('start', cb, next);
 };
 
 Recorder.prototype.stop = function (next) {
@@ -62,8 +67,8 @@ Recorder.prototype.stop = function (next) {
   });
 };
 
-Recorder.prototype.stopped = function (next) {
-  this.on('stop', next);
+Recorder.prototype.stopped = function (cb, next) {
+  this.on('stop', cb, next);
 };
 
 Recorder.prototype.timer = function (next) {
