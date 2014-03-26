@@ -8,6 +8,12 @@ function Recorder() {
   this.strategy = null;
 }
 
+Recorder.prototype.clear = function (next) {
+  this.events = new events.EventEmitter();
+  this.isRecording = false;
+  this.strategy.clear.call(this.data, next);
+};
+
 Recorder.prototype.config = function (name, options, next) {
   if (this.strategy.name !== name) return next();
   this.strategy.config.call(this.data, options, next);
@@ -34,9 +40,9 @@ Recorder.prototype.send = function (url, next) {
   this.strategy.send.call(self.data, url,
     function (err, res) {
       self.events.emit('send', res);
+      next();
     }
   );
-  next();
 };
 
 Recorder.prototype.sent = function (cb, next) {
