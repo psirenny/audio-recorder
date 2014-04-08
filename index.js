@@ -39,7 +39,7 @@ Recorder.prototype.send = function (url, next) {
   var self = this;
   this.strategy.send.call(self.data, url,
     function (err, res) {
-      self.events.emit('send', res);
+      self.events.emit('send', err, res);
       next();
     }
   );
