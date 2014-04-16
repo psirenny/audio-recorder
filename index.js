@@ -77,13 +77,14 @@ Recorder.prototype.stopped = function (cb, next) {
   this.on('stop', cb, next);
 };
 
-Recorder.prototype.timer = function (next) {
+Recorder.prototype.timer = function (cb, next) {
   var startTime = (new Date()).getTime();
   this.timerId = setInterval(function () {
     var currentTime = (new Date()).getTime();
     var elapsedTime = currentTime - startTime;
-    next(elapsedTime);
+    cb(elapsedTime);
   }, 50);
+  next();
 };
 
 Recorder.prototype.use = function (strat, next) {
