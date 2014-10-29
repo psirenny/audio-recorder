@@ -1,99 +1,83 @@
-var chainit = require('chainit')
-  , events = require('events');
+var events = require('events');
+var util = require('util');
 
-function Recorder() {
-  this.data = {};
-  this.events = new events.EventEmitter();
-  this.isRecording = false;
-  this.strategy = null;
+function Recorder(options) {
+  this.timer = {};
 }
 
-Recorder.prototype.clear = function (next) {
-  this.events = new events.EventEmitter();
-  this.isRecording = false;
-  this.strategy.clear.call(this.data, next);
+util.inherits(Recorder, events.EventEmitter);
+
+Recorder.prototype._tick = function () {
+  this.timer.currentTime = new Date().getTime();
+  this.timer.duration = this.timer.currentTime - this.timer.startTime;
+  this.emit('tick', this.timer.duration);
+  if (this.timer.duration > this.timer.maxDuration) this.stop();
 };
 
-Recorder.prototype.config = function (name, options, next) {
-  if (this.strategy.name !== name) return next();
-  this.strategy.config.call(this.data, options, next);
+Recorder.prototype.destroy = function () {
+  this.strategy = null;
+  clearInterval(this.timer.id);
+  this.timer = {};
+  this.emit('destroy');
 };
 
-Recorder.prototype.limit = function (time, next) {
+Recorder.prototype.permission = function (callback) {
   var self = this;
-  var stop = function () { self.stop(); };
-  this.limitObj = setTimeout(stop, time);
-  next();
-};
-
-Recorder.prototype.on = function (event, callback, next) {
-  this.events.on(event, callback);
-  next();
-};
-
-Recorder.prototype.permission = function (next) {
-  this.strategy.permission.call(this.data, next);
-};
-
-Recorder.prototype.send = function (url, next) {
-  var self = this;
-  this.strategy.send.call(self.data, url,
-    function (err, res) {
-      self.events.emit('send', err, res);
-      next();
-    }
-  );
-};
-
-Recorder.prototype.sent = function (cb, next) {
-  this.on('send', cb, next);
-};
-
-Recorder.prototype.start = function (next) {
-  var self = this;
-  this.strategy.start.call(this.data, function () {
-    self.isRecording = true;
-    self.events.emit('start');
-    next();
+  if (!callback) callback = function () {};
+  this.emit('permission');
+  this.strategy.permission.call(this, function (err, val) {
+    if (err) return callback(err);
+    callback(null, val);
+    self.emit('permitted', val);
   });
+  return this;
 };
 
-Recorder.prototype.started = function (cb, next) {
-  this.on('start', cb, next);
-};
-
-Recorder.prototype.stop = function (next) {
+Recorder.prototype.start = function (opts, callback) {
   var self = this;
-  if (this.limitObj) clearTimeout(this.limitObj);
-  if (this.timerId) clearInterval(this.timerId);
-  this.strategy.stop.call(this.data, function () {
-    self.isRecording = false;
-    self.events.emit('stop');
-    next();
+  if (!opts) opts = {};
+  if (!callback) callback = function () {};
+  if (typeof opts === 'function') callback = opts;
+  if (!opts.maxDuration) opts.maxDuration = Infinity;
+  if (!opts.period) opts.period = 100;
+  self.emit('start');
+  this.strategy.start.call(this, function (err) {
+    if (err) return callback(err);
+    self.timer.maxDuration = opts.maxDuration;
+    self.timer.startTime = new Date().getTime();
+    self.timer.id = setInterval(self._tick.bind(self), opts.period);
+    self.emit('started');
   });
+  return this;
 };
 
-Recorder.prototype.stopped = function (cb, next) {
-  this.on('stop', cb, next);
-};
-
-Recorder.prototype.timer = function (cb, next) {
-  var startTime = (new Date()).getTime();
-  this.timerId = setInterval(function () {
-    var currentTime = (new Date()).getTime();
-    var elapsedTime = currentTime - startTime;
-    cb(elapsedTime);
-  }, 50);
-  next();
-};
-
-Recorder.prototype.use = function (strat, next) {
+Recorder.prototype.stop = function (callback) {
   var self = this;
-  if (this.strategy) return next();
-  strat.available.call(this.data, function (val) {
-    if (val) self.strategy = strat;
-    next();
+  if (!callback) callback = function () {};
+  clearInterval(self.timer.id);
+  self.timer = {};
+  self.emit('stop');
+  this.strategy.stop.call(this, function (err, uri) {
+    if (err) return callback(err);
+    callback(null, uri);
+    self.emit('stopped', uri);
   });
+  return this;
 };
 
-module.exports = chainit(Recorder);
+Recorder.prototype.use = function (strategy, callback) {
+  var self = this;
+  if (this.strategy) return this;
+  if (!callback) callback = function () {};
+  strategy.available(function (err, val) {
+    if (err) return self;
+    if (!val) return self;
+    self.strategy = strategy;
+    self.strategy.create.call(self, callback);
+  });
+  return this;
+};
+
+module.exports = function () {
+  return new Recorder();
+};
