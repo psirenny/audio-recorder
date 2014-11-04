@@ -57,10 +57,10 @@ Recorder.prototype.stop = function (callback) {
   clearInterval(self.timer.id);
   self.timer = {};
   self.emit('stop');
-  this.strategy.stop.call(this, function (err, uri) {
+  this.strategy.stop.call(this, function (err, results) {
     if (err) return callback(err);
-    callback(null, uri);
-    self.emit('stopped', uri);
+    callback(null, results);
+    self.emit('stopped', results);
   });
   return this;
 };
