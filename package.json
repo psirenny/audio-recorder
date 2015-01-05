@@ -3,9 +3,6 @@
   "bugs": {
     "url": "https://github.com/psirenny/audio-recorder/issues"
   },
-  "dependencies": {
-    "chainit": "*"
-  },
   "description": "An extensible audio recorder.",
   "keywords": [
     "audio",
@@ -23,5 +20,5 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "version": "0.7.0"
+  "version": "0.8.0"
 }

@@ -65,6 +65,10 @@ Recorder.prototype.stop = function (callback) {
   return this;
 };
 
+Recorder.prototype.unsupported = function () {
+  return !this.strategy;
+};
+
 Recorder.prototype.use = function (strategy, callback) {
   var self = this;
   if (this.strategy) return this;
